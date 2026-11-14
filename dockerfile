@@ -10,8 +10,11 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     libzip-dev \
     libsqlite3-dev \
+    libpq-dev \
     && docker-php-ext-install \
         pdo_sqlite \
+        pdo_pgsql \
+        pgsql \
         mbstring \
         exif \
         pcntl \
@@ -66,5 +69,5 @@ RUN mkdir -p /var/data \
 
 EXPOSE 10000
 
-# Initialize SQLite and run migrations
-CMD ["bash", "-lc", "mkdir -p database && touch database/database.sqlite && chown -R www-data:www-data database storage bootstrap/cache && chmod -R 775 database storage bootstrap/cache && php artisan migrate --force && exec apache2-foreground"]
+# Initialize application and run migrations
+CMD ["bash", "-lc", "chown -R www-data:www-data storage bootstrap/cache database && chmod -R 775 storage bootstrap/cache database && php artisan config:clear && php artisan migrate --force && exec apache2-foreground"]
