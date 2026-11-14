@@ -70,4 +70,6 @@ RUN mkdir -p /var/data \
 EXPOSE 10000
 
 # Initialize application and run migrations
-CMD ["bash", "-lc", "chown -R www-data:www-data storage bootstrap/cache database && chmod -R 775 storage bootstrap/cache database && php artisan config:clear && php artisan migrate --force && php artisan db:seed --force exec apache2-foreground"]
+
+CMD ["bash", "-lc", "chown -R www-data:www-data storage bootstrap/cache database && chmod -R 775 storage bootstrap/cache database && php artisan config:clear && php artisan migrate --force && php artisan db:seed --force && exec apache2-foreground"]
+
