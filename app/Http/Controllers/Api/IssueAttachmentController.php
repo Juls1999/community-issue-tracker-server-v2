@@ -23,7 +23,6 @@ class IssueAttachmentController extends Controller
         );
     }
 
-
     public function store(Request $request, Issue $issue)
     {
         $this->authorize('view', $issue);
@@ -39,29 +38,42 @@ class IssueAttachmentController extends Controller
             ],
         ]);
 
-        $disk = Storage::disk('local');
+        $disk = Storage::disk('supabase');
         $paths = [];
 
         try {
-            $attachments = DB::transaction(function () use ($validated, $request, $issue, $disk, &$paths) {
-                $attachments = [];
+            $attachments = DB::transaction(
+                function () use ($validated, $request, $issue, $disk, &$paths) {
+                    $attachments = [];
 
-                foreach ($validated['images'] as $file) {
-                    $path = $file->store('issue-attachments', 'local');
-                    $paths[] = $path;
+                    foreach ($validated['images'] as $file) {
+                        $path = $file->store(
+                            'issue-attachments',
+                            'supabase'
+                        );
 
-                    $attachments[] = $issue->attachments()->create([
-                        'uploaded_by' => $request->user()->id,
-                        'file_path' => $path,
-                        'original_name' => $file->getClientOriginalName(),
-                        'mime_type' => $file->getMimeType(),
-                        'file_size' => $file->getSize(),
-                    ]);
+                        if (!$path) {
+                            throw new \RuntimeException(
+                                'Failed to upload image.'
+                            );
+                        }
+
+                        $paths[] = $path;
+
+                        $attachments[] = $issue->attachments()->create([
+                            'uploaded_by' => $request->user()->id,
+                            'file_path' => $path,
+                            'original_name' => $file->getClientOriginalName(),
+                            'mime_type' => $file->getMimeType(),
+                            'file_size' => $file->getSize(),
+                        ]);
+                    }
+
+                    return $attachments;
                 }
-
-                return $attachments;
-            });
+            );
         } catch (\Throwable $exception) {
+            // Remove uploaded files if database operation fails
             foreach ($paths as $path) {
                 $disk->delete($path);
             }
@@ -70,7 +82,7 @@ class IssueAttachmentController extends Controller
         }
 
         foreach ($attachments as $attachment) {
-            $attachment->load('uploader:id,name');
+            $attachment->load('uploader:id,full_name');
         }
 
         return response()->json([
@@ -78,7 +90,6 @@ class IssueAttachmentController extends Controller
             'data' => $attachments,
         ], 201);
     }
-
 
     public function download(
         Issue $issue,
@@ -91,12 +102,14 @@ class IssueAttachmentController extends Controller
             404
         );
 
+        $disk = Storage::disk('supabase');
+
         abort_unless(
-            Storage::disk('local')->exists($attachment->file_path),
+            $disk->exists($attachment->file_path),
             404
         );
 
-        return Storage::disk('local')->download(
+        return $disk->download(
             $attachment->file_path,
             basename($attachment->original_name)
         );
