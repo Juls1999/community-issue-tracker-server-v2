@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\IssueCommentResource;
 use App\Models\Issue;
 use App\Models\IssueComment;
 use App\Notifications\IssueCommented;
@@ -16,11 +17,11 @@ class IssueCommentController extends Controller
 
         $comments = $issue->comments()
             ->where('is_internal', false)
-            ->with('user:id,name')
+            ->with('user')
             ->latest()
             ->paginate(20);
 
-        return response()->json($comments);
+        return IssueCommentResource::collection($comments);
     }
 
     public function store(Request $request, Issue $issue)
@@ -39,7 +40,7 @@ class IssueCommentController extends Controller
 
         // Load the relationships required by the notification.
         $comment->load([
-            'user:id,name',
+            'user:id,first_name,middle_name,last_name',
             'issue:id,uuid,title,user_id,assigned_to',
         ]);
 
