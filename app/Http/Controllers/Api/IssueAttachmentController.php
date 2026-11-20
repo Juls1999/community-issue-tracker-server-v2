@@ -27,6 +27,13 @@ class IssueAttachmentController extends Controller
     {
         $this->authorize('view', $issue);
 
+        dd([
+            'content_type' => $request->header('Content-Type'),
+            'has_files' => $request->hasFile('images'),
+            'files' => $request->allFiles(),
+            'post' => $request->all(),
+        ]);
+
         $validated = $request->validate([
             'images' => ['required', 'array', 'min:1'],
             'images.*' => [
