@@ -15,12 +15,20 @@ class IssueAttachmentController extends Controller
     {
         $this->authorize('view', $issue);
 
-        return response()->json(
-            $issue->attachments()
-                ->with('uploader:id,full_name')
-                ->latest()
-                ->paginate(20)
-        );
+        $attachments = $issue->attachments()
+            ->with('uploader:id,full_name')
+            ->latest()
+            ->paginate(20);
+
+        $disk = Storage::disk('supabase');
+
+        $attachments->getCollection()->transform(function ($attachment) use ($disk) {
+            $attachment->file_url = $disk->url($attachment->file_path);
+
+            return $attachment;
+        });
+
+        return response()->json($attachments);
     }
 
     public function store(Request $request, Issue $issue)
