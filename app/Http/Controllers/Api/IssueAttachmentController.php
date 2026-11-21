@@ -56,15 +56,12 @@ class IssueAttachmentController extends Controller
                     $attachments = [];
 
                     foreach ($validated['images'] as $file) {
-                        $path = $file->store(
-                            'issue-attachments',
-                            'supabase'
-                        );
+                        $folder = "issue-attachments/{$request->user()->full_name}/{$issue->uuid}";
+
+                        $path = $file->store($folder, 'supabase');
 
                         if (!$path) {
-                            throw new \RuntimeException(
-                                'Failed to upload image.'
-                            );
+                            throw new \RuntimeException('Failed to upload image.');
                         }
 
                         $paths[] = $path;
