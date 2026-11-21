@@ -16,7 +16,7 @@ class IssueAttachmentController extends Controller
         $this->authorize('view', $issue);
 
         $attachments = $issue->attachments()
-            ->with('uploader:id,full_name')
+            ->with('uploader')
             ->latest()
             ->paginate(20);
 
@@ -88,7 +88,7 @@ class IssueAttachmentController extends Controller
         }
 
         foreach ($attachments as $attachment) {
-            $attachment->load('uploader:id,full_name');
+            $attachment->load('uploader');
         }
 
         return response()->json([
