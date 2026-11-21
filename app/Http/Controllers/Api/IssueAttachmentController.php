@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\IssueAttachmentResource;
 use App\Models\Issue;
 use App\Models\IssueAttachment;
 use Illuminate\Http\Request;
@@ -28,7 +29,7 @@ class IssueAttachmentController extends Controller
             return $attachment;
         });
 
-        return response()->json($attachments);
+        return IssueAttachmentResource::collection($attachments);
     }
 
     public function store(Request $request, Issue $issue)
